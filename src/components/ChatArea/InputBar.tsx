@@ -3,14 +3,13 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Send, Square } from 'lucide-react'
 
-interface ChatInputProps {
+interface InputBarProps {
   onSend: (text: string) => void
   onStop: () => void
   isStreaming: boolean
-  disabled?: boolean
 }
 
-export function ChatInput({ onSend, onStop, isStreaming, disabled }: ChatInputProps) {
+export function InputBar({ onSend, onStop, isStreaming }: InputBarProps) {
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -18,17 +17,14 @@ export function ChatInput({ onSend, onStop, isStreaming, disabled }: ChatInputPr
     const el = textareaRef.current
     if (!el) return
     el.style.height = 'auto'
-    el.style.height = Math.min(el.scrollHeight, 160) + 'px'
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px'
   }
 
   const handleSend = () => {
     const text = input.trim()
     if (!text || isStreaming) return
     setInput('')
-    // Reset height
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-    }
+    if (textareaRef.current) textareaRef.current.style.height = 'auto'
     onSend(text)
   }
 
@@ -41,27 +37,21 @@ export function ChatInput({ onSend, onStop, isStreaming, disabled }: ChatInputPr
 
   return (
     <div className="border-t border-border bg-background/80 backdrop-blur-sm p-3">
-      <div className="flex items-end gap-2 rounded-xl border border-input bg-background px-3 py-2 shadow-sm focus-within:ring-1 focus-within:ring-ring">
+      <div className="flex items-end gap-2 rounded-xl border border-input bg-background px-3 py-2 focus-within:ring-1 focus-within:ring-ring">
         <Textarea
           ref={textareaRef}
           rows={1}
-          placeholder="Message… (Enter to send, Shift+Enter for newline)"
+          placeholder="說點什麼… (Enter 送出，Shift+Enter 換行)"
           value={input}
           onChange={(e) => {
             setInput(e.target.value)
             autoResize()
           }}
           onKeyDown={handleKeyDown}
-          disabled={disabled}
-          className="flex-1 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0 min-h-[24px] max-h-40"
+          className="flex-1 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0 min-h-[24px] max-h-[120px]"
         />
         {isStreaming ? (
-          <Button
-            variant="destructive"
-            size="icon"
-            className="h-8 w-8 flex-shrink-0"
-            onClick={onStop}
-          >
+          <Button variant="destructive" size="icon" className="h-8 w-8 flex-shrink-0" onClick={onStop}>
             <Square className="h-3.5 w-3.5" />
           </Button>
         ) : (
@@ -69,15 +59,12 @@ export function ChatInput({ onSend, onStop, isStreaming, disabled }: ChatInputPr
             size="icon"
             className="h-8 w-8 flex-shrink-0"
             onClick={handleSend}
-            disabled={!input.trim() || disabled}
+            disabled={!input.trim()}
           >
             <Send className="h-3.5 w-3.5" />
           </Button>
         )}
       </div>
-      <p className="mt-1.5 text-center text-xs text-muted-foreground">
-        AI can make mistakes. Verify important info.
-      </p>
     </div>
   )
 }
