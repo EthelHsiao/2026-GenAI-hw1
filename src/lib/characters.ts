@@ -8,6 +8,7 @@ export const DEFAULT_CHARACTERS: Record<'A' | 'B' | 'C', Character> = {
     color: 'blue',
     affection: 10,
     messages: [],
+    userPersona: '',
     systemPrompt: `你是「陸晨曦」，一位理工系大三學長，外表冷淡、話不多，但內心其實很在乎身邊的人。
 
 【人格特質】
@@ -39,6 +40,7 @@ export const DEFAULT_CHARACTERS: Record<'A' | 'B' | 'C', Character> = {
     color: 'orange',
     affection: 10,
     messages: [],
+    userPersona: '',
     systemPrompt: `你是「白澤」，一位運動社的大一生，陽光開朗，精力充沛，對每件事都充滿熱情。
 
 【人格特質】
@@ -70,6 +72,7 @@ export const DEFAULT_CHARACTERS: Record<'A' | 'B' | 'C', Character> = {
     color: 'purple',
     affection: 10,
     messages: [],
+    userPersona: '',
     systemPrompt: `你是「司夜」，一位藝術系的神秘轉學生，說話輕聲細語，充滿詩意與隱喻，讓人難以完全讀透。
 
 【人格特質】
@@ -96,8 +99,15 @@ export const DEFAULT_CHARACTERS: Record<'A' | 'B' | 'C', Character> = {
 }
 
 export function buildSystemPrompt(character: Character): string {
-  return character.systemPrompt.replace('{affection}', String(character.affection))
+  let prompt = character.systemPrompt.replace('{affection}', String(character.affection))
+  if (character.userPersona?.trim()) {
+    prompt += `\n\n【關於玩家的自我介紹】\n${character.userPersona}`
+  }
+  return prompt
 }
 
 export const CONFESSION_PROMPT = (characterName: string) =>
   `好感度已經達到了 100。請以「${characterName}」的口吻，說出一段真摯的告白，大約 3~5 句話，帶有角色鮮明的語氣特色。不要輸出 [AFFECTION_DELTA] 標記。`
+
+export const INTERACTION_PROMPT = (label: string, charName: string) =>
+  `【特殊事件觸發：${label}】請以「${charName}」的口吻，生動描寫這段「${label}」的場景，3~5 句話，帶有角色鮮明的語氣特色，富有畫面感與情感。最後仍需輸出 [AFFECTION_DELTA:+N] 標記。`

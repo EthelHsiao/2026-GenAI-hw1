@@ -10,6 +10,19 @@ interface MessageBubbleProps {
 export function MessageBubble({ message, isStreaming, characterEmoji }: MessageBubbleProps) {
   const isUser = message.role === 'user'
 
+  // Special event trigger card
+  if (message.isEvent) {
+    return (
+      <div className="flex justify-center px-4 py-3">
+        <div className="flex items-center gap-2 rounded-full bg-primary/10 border border-primary/25 px-4 py-1.5 text-sm">
+          <span>{message.eventEmoji}</span>
+          <span className="font-medium text-primary">{message.eventLabel} 觸發！</span>
+          <span>{message.eventEmoji}</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={cn('flex gap-2.5 px-4 py-2', isUser ? 'flex-row-reverse' : 'flex-row')}>
       {/* Avatar */}

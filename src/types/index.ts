@@ -16,6 +16,9 @@ export interface Message {
   role: 'user' | 'assistant'
   content: string       // already stripped of [AFFECTION_DELTA:...] for completed messages
   timestamp: string
+  isEvent?: boolean     // special interaction event trigger
+  eventLabel?: string   // display label e.g. "約會"
+  eventEmoji?: string   // display emoji e.g. "🌸"
 }
 
 export interface Character {
@@ -26,7 +29,22 @@ export interface Character {
   systemPrompt: string  // template with {affection} placeholder; editable in dev mode
   affection: number     // 0 ~ 100
   messages: Message[]   // sliding window, max 10 completed messages
+  userPersona: string   // player's self-introduction for this character
 }
+
+export interface Interaction {
+  id: string
+  label: string
+  emoji: string
+  minAffection: number
+}
+
+export const INTERACTIONS: Interaction[] = [
+  { id: 'date',       label: '約會', emoji: '🌸', minAffection: 30  },
+  { id: 'hold_hands', label: '牽手', emoji: '🤝', minAffection: 60  },
+  { id: 'hug',        label: '擁抱', emoji: '🫂', minAffection: 85  },
+  { id: 'kiss',       label: '親吻', emoji: '💋', minAffection: 100 },
+]
 
 export interface ChronicleEntry {
   id: string

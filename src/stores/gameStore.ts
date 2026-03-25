@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { streamAnthropicMessage } from '@/lib/anthropicApi'
-import { buildSystemPrompt, CONFESSION_PROMPT, DEFAULT_CHARACTERS } from '@/lib/characters'
+import { buildSystemPrompt, CONFESSION_PROMPT, DEFAULT_CHARACTERS, INTERACTION_PROMPT } from '@/lib/characters'
 import { getDisplayContent, parseAffectionDelta } from '@/lib/affectionParser'
-import { type CharId, type Character, type ChronicleEntry, type ConquestData, MILESTONE_THRESHOLDS } from '@/types'
+import { type CharId, type Character, type ChronicleEntry, type ConquestData, MILESTONE_THRESHOLDS, INTERACTIONS } from '@/types'
 import type { Settings } from '@/types'
 import { toast } from 'sonner'
 
@@ -22,7 +22,10 @@ interface GameStoreState {
 
   // Actions
   setActiveCharacter: (id: CharId) => void
+  setAffection: (charId: CharId, value: number) => void
+  updateUserPersona: (charId: CharId, persona: string) => void
   sendMessage: (text: string, settings: Settings) => Promise<void>
+  triggerInteraction: (interactionId: string, settings: Settings) => Promise<void>
   stopStreaming: () => void
   closeConquest: () => void
   resetCharacter: (id: CharId) => void
@@ -36,6 +39,17 @@ function getMilestoneDescription(name: string, threshold: number): string {
   if (threshold === 85) return `與${name}開始曖昧了，好感度突破 85！❤️`
   if (threshold === 60) return `與${name}越來越熟，好感度突破 60！🩷`
   return `與${name}成為朋友，好感度突破 30！🩶`
+}
+
+function showAffectionToast(delta: number, charName: string) {
+  if (delta > 0) {
+    toast.success(`💕 ${charName} 好感度 +${delta}`, {
+      duration: 2500,
+      style: { background: '#fdf2f8', border: '1px solid #f9a8d4', color: '#9d174d' },
+    })
+  } else if (delta < 0) {
+    toast.error(`💔 ${charName} 好感度 ${delta}`, { duration: 2500 })
+  }
 }
 
 export const useGameStore = create<GameStoreState>()(
@@ -53,22 +67,29 @@ export const useGameStore = create<GameStoreState>()(
 
       setActiveCharacter: (id) => set({ activeCharacterId: id }),
 
-      stopStreaming: () => {
-        abortController?.abort()
+      setAffection: (charId, value) =>
         set((state) => ({
-          streaming: { isStreaming: false, streamingCharId: null, currentStreamContent: '' },
-          // Remove the incomplete streaming message placeholder
           characters: {
             ...state.characters,
-            ...(state.streaming.streamingCharId
-              ? {
-                  [state.streaming.streamingCharId]: {
-                    ...state.characters[state.streaming.streamingCharId],
-                    // streaming message was not added to messages array, so nothing to remove
-                  },
-                }
-              : {}),
+            [charId]: {
+              ...state.characters[charId],
+              affection: Math.max(0, Math.min(100, value)),
+            },
           },
+        })),
+
+      updateUserPersona: (charId, persona) =>
+        set((state) => ({
+          characters: {
+            ...state.characters,
+            [charId]: { ...state.characters[charId], userPersona: persona },
+          },
+        })),
+
+      stopStreaming: () => {
+        abortController?.abort()
+        set(() => ({
+          streaming: { isStreaming: false, streamingCharId: null, currentStreamContent: '' },
         }))
       },
 
@@ -85,7 +106,7 @@ export const useGameStore = create<GameStoreState>()(
 
       sendMessage: async (text: string, settings: Settings) => {
         if (!settings.apiKey.trim()) {
-          toast.error('請先在設定中填入 Anthropic API Key')
+          toast.error('請先在設定中填入 API Key')
           return
         }
 
@@ -95,7 +116,6 @@ export const useGameStore = create<GameStoreState>()(
 
         if (state.streaming.isStreaming) return
 
-        // Chronicle: first chat
         const isFirstChat = character.messages.length === 0
         const newChronicleEntries: ChronicleEntry[] = []
         if (isFirstChat) {
@@ -108,7 +128,6 @@ export const useGameStore = create<GameStoreState>()(
           })
         }
 
-        // Add user message
         const userMsg = {
           id: crypto.randomUUID(),
           role: 'user' as const,
@@ -121,27 +140,16 @@ export const useGameStore = create<GameStoreState>()(
         set((state) => ({
           characters: {
             ...state.characters,
-            [activeCharacterId]: {
-              ...character,
-              messages: updatedMessages,
-            },
+            [activeCharacterId]: { ...character, messages: updatedMessages },
           },
           chronicle: [...chronicle, ...newChronicleEntries],
-          streaming: {
-            isStreaming: true,
-            streamingCharId: activeCharacterId,
-            currentStreamContent: '',
-          },
+          streaming: { isStreaming: true, streamingCharId: activeCharacterId, currentStreamContent: '' },
         }))
 
         abortController = new AbortController()
 
         try {
-          // Build API messages from completed messages (excluding the just-added user msg — it's in updatedMessages)
-          const apiMessages = updatedMessages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          }))
+          const apiMessages = updatedMessages.map((m) => ({ role: m.role, content: m.content }))
 
           await streamAnthropicMessage(
             {
@@ -162,7 +170,6 @@ export const useGameStore = create<GameStoreState>()(
               }))
             },
             () => {
-              // On done: parse affection delta, clean content, finalize
               const raw = get().streaming.currentStreamContent
               const { clean, delta } = parseAffectionDelta(raw)
 
@@ -177,7 +184,8 @@ export const useGameStore = create<GameStoreState>()(
               const oldAffection = currentChar.affection
               const newAffection = Math.max(0, Math.min(100, oldAffection + delta))
 
-              // Find milestone crossings
+              showAffectionToast(delta, currentChar.name)
+
               const milestones = MILESTONE_THRESHOLDS.filter(
                 (m) => oldAffection < m && newAffection >= m,
               )
@@ -201,14 +209,9 @@ export const useGameStore = create<GameStoreState>()(
                   },
                 },
                 chronicle: [...state.chronicle, ...milestoneEntries],
-                streaming: {
-                  isStreaming: false,
-                  streamingCharId: null,
-                  currentStreamContent: '',
-                },
+                streaming: { isStreaming: false, streamingCharId: null, currentStreamContent: '' },
               }))
 
-              // Trigger conquest if just reached 100
               if (newAffection >= 100 && oldAffection < 100) {
                 get()._triggerConquest(activeCharacterId, settings)
               }
@@ -225,12 +228,114 @@ export const useGameStore = create<GameStoreState>()(
         }
       },
 
-      // Internal: trigger conquest confession generation
+      triggerInteraction: async (interactionId: string, settings: Settings) => {
+        if (!settings.apiKey.trim()) {
+          toast.error('請先在設定中填入 API Key')
+          return
+        }
+
+        const state = get()
+        const { activeCharacterId, characters } = state
+        const character = characters[activeCharacterId]
+
+        if (state.streaming.isStreaming) return
+
+        const interaction = INTERACTIONS.find((i) => i.id === interactionId)
+        if (!interaction || character.affection < interaction.minAffection) return
+
+        const eventMsg = {
+          id: crypto.randomUUID(),
+          role: 'user' as const,
+          content: INTERACTION_PROMPT(interaction.label, character.name),
+          timestamp: new Date().toISOString(),
+          isEvent: true,
+          eventLabel: interaction.label,
+          eventEmoji: interaction.emoji,
+        }
+
+        const updatedMessages = [...character.messages, eventMsg].slice(-10)
+
+        set((state) => ({
+          characters: {
+            ...state.characters,
+            [activeCharacterId]: { ...character, messages: updatedMessages },
+          },
+          streaming: { isStreaming: true, streamingCharId: activeCharacterId, currentStreamContent: '' },
+        }))
+
+        abortController = new AbortController()
+
+        try {
+          const apiMessages = updatedMessages.map((m) => ({ role: m.role, content: m.content }))
+
+          await streamAnthropicMessage(
+            {
+              apiKey: settings.apiKey,
+              model: settings.model,
+              systemPrompt: buildSystemPrompt(character),
+              messages: apiMessages,
+              maxTokens: settings.maxTokens,
+              temperature: settings.temperature,
+              topP: settings.topP,
+            },
+            (chunk) => {
+              set((state) => ({
+                streaming: {
+                  ...state.streaming,
+                  currentStreamContent: state.streaming.currentStreamContent + chunk,
+                },
+              }))
+            },
+            () => {
+              const raw = get().streaming.currentStreamContent
+              const { clean, delta } = parseAffectionDelta(raw)
+
+              const assistantMsg = {
+                id: crypto.randomUUID(),
+                role: 'assistant' as const,
+                content: clean,
+                timestamp: new Date().toISOString(),
+              }
+
+              const currentChar = get().characters[activeCharacterId]
+              const oldAffection = currentChar.affection
+              const newAffection = Math.max(0, Math.min(100, oldAffection + delta))
+
+              showAffectionToast(delta, currentChar.name)
+
+              const finalMessages = [...currentChar.messages, assistantMsg].slice(-10)
+
+              set((state) => ({
+                characters: {
+                  ...state.characters,
+                  [activeCharacterId]: {
+                    ...state.characters[activeCharacterId],
+                    affection: newAffection,
+                    messages: finalMessages,
+                  },
+                },
+                streaming: { isStreaming: false, streamingCharId: null, currentStreamContent: '' },
+              }))
+
+              if (newAffection >= 100 && oldAffection < 100) {
+                get()._triggerConquest(activeCharacterId, settings)
+              }
+            },
+            abortController.signal,
+          )
+        } catch (err) {
+          if ((err as Error).name === 'AbortError') {
+            set({ streaming: { isStreaming: false, streamingCharId: null, currentStreamContent: '' } })
+            return
+          }
+          toast.error(`API 錯誤：${(err as Error).message}`)
+          set({ streaming: { isStreaming: false, streamingCharId: null, currentStreamContent: '' } })
+        }
+      },
+
       _triggerConquest: async (charId: CharId, settings: Settings) => {
         const character = get().characters[charId]
-        set({
-          conquestData: { charId, confession: '', isGenerating: true },
-        })
+        set({ conquestData: { charId, confession: '', isGenerating: true } })
 
         const confessionAbort = new AbortController()
         try {
@@ -276,6 +381,25 @@ export const useGameStore = create<GameStoreState>()(
         activeCharacterId: state.activeCharacterId,
         chronicle: state.chronicle,
       }),
+      merge: (persisted, current) => {
+        const p = persisted as Partial<GameStoreState>
+        // Migrate characters: fill in any missing fields from DEFAULT_CHARACTERS
+        const migratedCharacters = { ...current.characters }
+        if (p.characters) {
+          for (const id of ['A', 'B', 'C'] as CharId[]) {
+            migratedCharacters[id] = {
+              ...DEFAULT_CHARACTERS[id],
+              ...p.characters[id],
+              userPersona: p.characters[id]?.userPersona ?? '',
+            }
+          }
+        }
+        return {
+          ...current,
+          ...p,
+          characters: migratedCharacters,
+        }
+      },
     },
   ),
 )

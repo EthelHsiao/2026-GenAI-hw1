@@ -2,6 +2,50 @@ import type { ModelId } from '@/types'
 
 const API_BASE = '/api/v1'
 
+export async function generateSuggestions(options: {
+  apiKey: string
+  model: ModelId
+  systemPrompt: string
+  messages: AnthropicMessage[]
+  characterName: string
+}): Promise<string[]> {
+  const { apiKey, model, systemPrompt, messages, characterName } = options
+  try {
+    const response = await fetch(`${API_BASE}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 200,
+        temperature: 1.0,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages,
+          {
+            role: 'user',
+            content: `請為玩家生成3個不同風格的簡短回覆建議（每個15字以內），用來回應${characterName}。以JSON陣列格式輸出，例如：["建議1", "建議2", "建議3"]。只輸出JSON陣列，不要其他任何文字。`,
+          },
+        ],
+        stream: false,
+      }),
+    })
+    if (!response.ok) return []
+    const data = await response.json() as { choices?: { message?: { content?: string } }[] }
+    const content = data.choices?.[0]?.message?.content ?? ''
+    const match = content.match(/\[[\s\S]*?\]/)
+    if (match) {
+      const parsed = JSON.parse(match[0])
+      if (Array.isArray(parsed)) return (parsed as unknown[]).slice(0, 3).map(String)
+    }
+  } catch {
+    // silently fail
+  }
+  return []
+}
+
 export interface AnthropicMessage {
   role: 'user' | 'assistant'
   content: string
