@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//mnt/c/Users/USER/Ethel/NYCU/GenAI/**)",
+      "Bash(npm create:*)",
+      "Bash(ls /mnt/)",
+      "Read(//c/Users/USER/**)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)"
+    ]
+  }
+}
