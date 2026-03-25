@@ -11,10 +11,10 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/llm-api': {
+      '/api': {
         target: 'http://llama.sdc.nycu.club',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/llm-api/, '/v1'),
+        rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
   },
