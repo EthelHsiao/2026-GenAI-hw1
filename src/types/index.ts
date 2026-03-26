@@ -2,6 +2,7 @@ export type CharId = 'A' | 'B' | 'C'
 
 export type ModelId =
   | 'qwen35-397b'
+  | 'qwen35-4b'
 
 export interface Settings {
   apiKey: string
@@ -76,4 +77,5 @@ export const MILESTONE_THRESHOLDS = [30, 60, 85, 100] as const
 
 export const AVAILABLE_MODELS: { value: ModelId; label: string }[] = [
   { value: 'qwen35-397b', label: 'Qwen 3.5 397B' },
+  { value: 'qwen35-4b', label: 'Qwen 3.5 4B' },
 ]
