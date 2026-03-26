@@ -1,123 +1,143 @@
-# 💛 LLM 乙女攻略
+# 💛 LLM Otome Game
 
-一款以大型語言模型驅動的乙女遊戲，玩家可以和三位性格迥異的男主角對話、培養好感度，並解鎖專屬互動事件。
-
----
-
-## 🎮 遊戲介紹
-
-與三位男主角展開對話，根據你的回應方式，好感度會上升或下降。當好感度累積到特定門檻，將解鎖約會、牽手、擁抱、親吻等特殊事件，最終達成攻略！
-
-### 角色介紹
-
-| 角色 | 個性 | 特色 |
-|------|------|------|
-| 🧊 陸晨曦 | 冷淡理工學長 | 話少但行動力強，對數理有超強執著 |
-| ☀️ 白澤 | 陽光運動社大一生 | 精力充沛、情感直接，容易被感動 |
-| 🌙 司夜 | 神秘藝術系轉學生 | 說話充滿詩意隱喻，觀察力超強 |
+An LLM-powered otome game where you chat with three characters, build affection, and unlock special events.
 
 ---
 
-## ✨ 功能特色
+## 🎮 Gameplay
 
-### 核心玩法
-- **LLM 對話**：每位角色有獨特人格設定，由 AI 扮演角色回應
-- **好感度系統**：AI 根據對話品質自動調整好感度（0 ~ 100），每次對話後即時 toast 顯示變化
-- **里程碑紀錄**：大事記時間軸記錄每段關係的重要時刻
+Converse with three male characters. Your replies affect their affection level. Reach affection thresholds to unlock special interactions — dating, holding hands, hugging, kissing — and ultimately achieve conquest!
 
-### 互動功能
-- **推薦回覆**：每次 AI 回應後自動生成 3 個建議回覆，點擊即可送出 ✨
-- **解鎖互動事件**：達到好感度門檻後可觸發特殊劇情，每次生成的內容皆不同
+### Characters
 
-  | 互動 | 解鎖條件 |
-  |------|---------|
-  | 🌸 約會 | 好感度 ≥ 30 |
-  | 🤝 牽手 | 好感度 ≥ 60 |
-  | 🫂 擁抱 | 好感度 ≥ 85 |
-  | 💋 親吻 | 好感度 ≥ 100 |
-
-- **攻略結局**：好感度達 100 觸發告白，生成角色專屬告白台詞 💛
-
-### 個人化設定
-- **自我介紹**：為每位角色設定不同的自我介紹，讓角色認識你
-- **模型參數調整**：Temperature、Max Tokens、Top P 自由調整
-
-### 開發者功能
-- **好感度直接調整**：Slider 即時修改好感度，快速測試各階段互動
-- **System Prompt 編輯**：自訂角色人設與對話規則
-- **角色重置**：清除對話紀錄與好感度
+| Character | Personality | Trait |
+|-----------|-------------|-------|
+| 🧊 Lu Chenxi | Cold engineering senior | Few words, strong action, obsessed with math |
+| ☀️ Bai Ze | Sunny sports freshman | Energetic, emotionally direct, easily moved |
+| 🌙 Si Ye | Mysterious art transfer student | Poetic speech, sharp observer |
 
 ---
 
-## 🛠 技術架構
+## ✨ Features
 
-| 類別 | 技術 |
-|------|------|
-| 前端框架 | React 19 + TypeScript |
-| 建構工具 | Vite 6 |
-| 狀態管理 | Zustand 5（含 persist） |
-| 樣式 | Tailwind CSS + shadcn/ui |
-| LLM API | OpenAI-compatible API（NYCU llama proxy） |
-| 串流 | Fetch SSE（手動解析 OpenAI stream 格式） |
+### Required Features (HW Spec)
+
+- **LLM Model Selection** — Switch between available models (Qwen 3.5 397B / Qwen 3.5 4B) in the Settings panel
+- **Custom System Prompt** — Edit each character's system prompt directly via Developer Mode
+- **Custom API Parameters** — Adjust Temperature, Max Tokens, and Top P freely in Settings
+- **Streaming** — LLM responses stream token-by-token via Fetch SSE (OpenAI stream format)
+- **Short-term Conversation Memory** — Each character maintains a sliding window of the last 10 messages as context for the LLM
+
+### Core Gameplay
+
+- **LLM-driven Characters** — Each character has a unique persona; AI responds in character
+- **Affection System** — AI automatically adjusts affection (0–100) based on conversation quality; changes shown via toast notifications
+- **Milestone Chronicle** — A timeline records key moments in each relationship
+
+### Interactive Features
+
+- **Suggested Replies** — After each AI response, 3 reply suggestions are auto-generated; click to send
+- **Unlock Interaction Events** — Reach affection thresholds to trigger special story scenes (content varies each time)
+
+  | Event | Unlock Condition |
+  |-------|-----------------|
+  | 🌸 Date | Affection ≥ 30 |
+  | 🤝 Hold Hands | Affection ≥ 60 |
+  | 🫂 Hug | Affection ≥ 85 |
+  | 💋 Kiss | Affection ≥ 100 |
+
+- **Conquest Ending** — Reaching 100 affection triggers a confession; the character generates a unique confession line 💛
+
+### Personalization
+
+- **User Persona** — Set a different self-introduction for each character so they "know" you
+- **Per-character Settings** — Each character remembers your persona independently
+
+### Developer Mode
+
+- **Affection Slider** — Directly adjust affection via slider to quickly test each stage
+- **System Prompt Editor** — Customize character persona and conversation rules
+- **Character Reset** — Clear conversation history and affection
 
 ---
 
-## 🚀 快速開始
+## 🛠 Tech Stack
 
-### 安裝依賴
+| Category | Technology |
+|----------|-----------|
+| Frontend | React 19 + TypeScript |
+| Build Tool | Vite 6 |
+| State Management | Zustand 5 (with persist) |
+| Styling | Tailwind CSS + shadcn/ui |
+| LLM API | OpenAI-compatible API |
+| Streaming | Fetch SSE (manual OpenAI stream parsing) |
+
+---
+
+## 🚀 Getting Started
+
+### Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 啟動開發伺服器
+### Start Development Server
 
 ```bash
 npm run dev
 ```
 
-開啟瀏覽器至 [http://localhost:5173](http://localhost:5173)
+Open your browser at [http://localhost:5173](http://localhost:5173)
 
-### 設定 API Key
+### Configure API Key
 
-1. 點擊右上角 ⚙️ 設定按鈕
-2. 填入 API Key（Bearer Token）
-3. 即可開始對話
+1. Click the ⚙️ Settings button in the top-right corner
+2. Enter your API Key (Bearer Token)
+3. Start chatting
 
-> API Key 僅儲存於本機 `localStorage`，不會傳送至任何第三方。
+> The API Key is stored only in your browser's `localStorage` and is never sent to any third party.
 
 ---
 
-## 📁 專案結構
+## 🔒 Security Notes
+
+- **API Key** is stored in browser `localStorage` only — never committed to Git
+- **`.env` files** are listed in `.gitignore` — never commit secrets
+- The app proxies API requests through Vite's dev server proxy to avoid exposing the backend URL in client code
+
+---
+
+## 📁 Project Structure
 
 ```
 src/
 ├── components/
-│   ├── ChatArea/           # 對話區（訊息列表、輸入框、推薦回覆）
-│   ├── CharacterPanel/     # 左側角色選擇面板
-│   ├── SidePanel/          # 右側好感度、互動事件、大事記
-│   ├── ConquestOverlay.tsx # 攻略成功彈窗
+│   ├── ChatArea/           # Chat area (message list, input, suggested replies)
+│   ├── CharacterPanel/     # Left-side character selection panel
+│   ├── SidePanel/          # Right-side affection, interaction events, chronicle
+│   ├── ConquestOverlay.tsx # Conquest success overlay
 │   ├── Navbar.tsx
-│   └── SettingsModal.tsx   # 設定（含開發者模式）
+│   └── SettingsModal.tsx   # Settings (including Developer Mode)
 ├── stores/
-│   ├── gameStore.ts        # 遊戲主狀態（角色、對話、串流、好感度）
-│   └── settingsStore.ts    # API 設定
+│   ├── gameStore.ts        # Main game state (characters, messages, streaming, affection)
+│   └── settingsStore.ts    # API settings (key, model, parameters)
 ├── lib/
-│   ├── anthropicApi.ts     # API 呼叫（串流 + 建議回覆生成）
-│   ├── characters.ts       # 角色預設資料、Prompt 模板
-│   └── affectionParser.ts  # 解析 [AFFECTION_DELTA] 標記
+│   ├── anthropicApi.ts     # API calls (streaming + suggested reply generation)
+│   ├── characters.ts       # Character defaults and prompt templates
+│   └── affectionParser.ts  # Parse [AFFECTION_DELTA] markers from LLM output
 └── types/
-    └── index.ts            # 型別定義（含 INTERACTIONS 常數）
+    └── index.ts            # Type definitions (including INTERACTIONS constants)
 ```
 
 ---
 
-## 🎯 好感度機制
+## 🎯 Affection Mechanism
 
-AI 在每次回應結尾輸出隱藏標記 `[AFFECTION_DELTA:+N]`，前端解析後更新好感度並從顯示內容中移除。各角色有不同的觸發規則：
+The AI appends a hidden marker `[AFFECTION_DELTA:+N]` at the end of each response. The frontend parses it, updates the affection value, and strips the marker from the displayed message.
 
-| 角色 | 好感度上升 | 好感度下降 |
-|------|-----------|-----------|
-| 🧊 陸晨曦 | 理解他的孤獨或理工思維 +3~5 | 嘲諷或打擾 -1~3 |
-| ☀️ 白澤 | 聊喜歡的事 +3~5 | 打擊他的熱情 -3 |
-| 🌙 司夜 | 理解他的隱喻 +3~5 | 強行要他說清楚 -1~2 |
+| Character | Affection Up | Affection Down |
+|-----------|-------------|----------------|
+| 🧊 Lu Chenxi | Understanding his loneliness or logic +3~5 | Mocking or interrupting -1~3 |
+| ☀️ Bai Ze | Talking about shared interests +3~5 | Dampening his enthusiasm -3 |
+| 🌙 Si Ye | Understanding his metaphors +3~5 | Forcing blunt explanations -1~2 |
