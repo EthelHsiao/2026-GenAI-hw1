@@ -38,7 +38,7 @@ export interface Message {
   eventLabel?: string   // display label e.g. "約會"
   eventEmoji?: string   // display emoji e.g. "🌸"
   imagePreviewUrl?: string  // Object URL for image preview (user messages with image)
-  toolName?: string         // tool that was invoked ('web_search' | 'write_diary' | 'read_diary')
+  toolName?: string         // tool that was invoked ('get_weather' | 'web_search' | 'write_diary' | 'read_diary')
   toolQuery?: string        // search query or diary operation description
 }
 

@@ -11,12 +11,14 @@ interface MessageBubbleProps {
 }
 
 const TOOL_ICON: Record<string, string> = {
+  get_weather: '🌤️',
   web_search:  '📡',
   write_diary: '📓',
   read_diary:  '📖',
 }
 
 const TOOL_LABEL: Record<string, string> = {
+  get_weather: '天氣來源：Open-Meteo',
   web_search:  '資料來源：DuckDuckGo',
   write_diary: '寫了日記',
   read_diary:  '翻了翻日記',
