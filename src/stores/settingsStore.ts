@@ -10,10 +10,13 @@ interface SettingsStore {
 
 const DEFAULT_SETTINGS: Settings = {
   apiKey: '',
-  model: 'qwen35-397b' as ModelId,
+  model: 'qwen35-4b' as ModelId,
   temperature: 0.9,
   maxTokens: 1024,
   topP: 1.0,
+  geminiApiKey: import.meta.env.VITE_GEMINI_API_KEY ?? '',
+  searchApiKey: '',
+  autoTts: false,
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -26,6 +29,11 @@ export const useSettingsStore = create<SettingsStore>()(
     }),
     {
       name: 'otome-settings',
+      // Merge persisted partial with defaults so new fields are always initialised
+      merge: (persisted, current) => ({
+        ...current,
+        settings: { ...DEFAULT_SETTINGS, ...(persisted as SettingsStore).settings },
+      }),
     },
   ),
 )

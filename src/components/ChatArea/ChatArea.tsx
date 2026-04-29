@@ -7,6 +7,7 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { useShallow } from 'zustand/react/shallow'
 import { generateSuggestions } from '@/lib/anthropicApi'
 import { buildSystemPrompt } from '@/lib/characters'
+import type { ImageInputData } from '@/types'
 
 export function ChatArea() {
   const settings = useSettingsStore((s) => s.settings)
@@ -22,22 +23,31 @@ export function ChatArea() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const wasStreamingRef = useRef(false)
 
-  // Generate suggestions after each AI response
+  // Generate suggestions after each AI response (only for Qwen, skip if no apiKey)
   useEffect(() => {
-    if (wasStreamingRef.current && !isThisCharStreaming && character.messages.length > 0 && settings.apiKey) {
+    if (
+      wasStreamingRef.current &&
+      !isThisCharStreaming &&
+      character.messages.length > 0 &&
+      settings.apiKey
+    ) {
       setLoadingSuggestions(true)
       setSuggestions([])
-      const apiMessages = character.messages.map((m) => ({ role: m.role, content: m.content }))
+      const apiMessages = character.messages
+        .slice(-10)
+        .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
       generateSuggestions({
         apiKey: settings.apiKey,
         model: settings.model,
         systemPrompt: buildSystemPrompt(character),
         messages: apiMessages,
         characterName: character.name,
-      }).then((replies) => {
-        setSuggestions(replies)
-        setLoadingSuggestions(false)
-      }).catch(() => setLoadingSuggestions(false))
+      })
+        .then((replies) => {
+          setSuggestions(replies)
+          setLoadingSuggestions(false)
+        })
+        .catch(() => setLoadingSuggestions(false))
     }
     wasStreamingRef.current = isThisCharStreaming
   }, [isThisCharStreaming]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -49,10 +59,10 @@ export function ChatArea() {
     wasStreamingRef.current = false
   }, [character.id])
 
-  const handleSend = (text: string) => {
+  const handleSend = (text: string, imageData?: ImageInputData) => {
     setSuggestions([])
     setLoadingSuggestions(false)
-    sendMessage(text, settings)
+    sendMessage(text, settings, imageData)
   }
 
   return (
@@ -83,7 +93,7 @@ export function ChatArea() {
       <SuggestedReplies
         suggestions={suggestions}
         isLoading={loadingSuggestions}
-        onSelect={handleSend}
+        onSelect={(text) => handleSend(text)}
       />
 
       <InputBar

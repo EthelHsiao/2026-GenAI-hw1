@@ -16,6 +16,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      '/ddg': {
+        target: 'https://api.duckduckgo.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/ddg/, ''),
+      },
     },
   },
 })

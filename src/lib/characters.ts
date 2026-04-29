@@ -1,4 +1,4 @@
-import type { Character } from '@/types'
+import type { Character, MemoryEntry } from '@/types'
 
 export const DEFAULT_CHARACTERS: Record<'A' | 'B' | 'C', Character> = {
   A: {
@@ -9,6 +9,8 @@ export const DEFAULT_CHARACTERS: Record<'A' | 'B' | 'C', Character> = {
     affection: 10,
     messages: [],
     userPersona: '',
+    memoryLog: [],
+    diary: [],
     systemPrompt: `你是「陸晨曦」，一位理工系大三學長，外表冷淡、話不多，但內心其實很在乎身邊的人。
 
 【人格特質】
@@ -41,6 +43,8 @@ export const DEFAULT_CHARACTERS: Record<'A' | 'B' | 'C', Character> = {
     affection: 10,
     messages: [],
     userPersona: '',
+    memoryLog: [],
+    diary: [],
     systemPrompt: `你是「白澤」，一位運動社的大一生，陽光開朗，精力充沛，對每件事都充滿熱情。
 
 【人格特質】
@@ -73,6 +77,8 @@ export const DEFAULT_CHARACTERS: Record<'A' | 'B' | 'C', Character> = {
     affection: 10,
     messages: [],
     userPersona: '',
+    memoryLog: [],
+    diary: [],
     systemPrompt: `你是「司夜」，一位藝術系的神秘轉學生，說話輕聲細語，充滿詩意與隱喻，讓人難以完全讀透。
 
 【人格特質】
@@ -98,11 +104,25 @@ export const DEFAULT_CHARACTERS: Record<'A' | 'B' | 'C', Character> = {
   },
 }
 
+/**
+ * Builds the full system prompt for an API call, injecting:
+ * 1. Current affection level
+ * 2. User persona (if set)
+ * 3. Last 5 memory log entries (long-term memory injection)
+ */
 export function buildSystemPrompt(character: Character): string {
   let prompt = character.systemPrompt.replace('{affection}', String(character.affection))
+
   if (character.userPersona?.trim()) {
     prompt += `\n\n【關於玩家的自我介紹】\n${character.userPersona}`
   }
+
+  if (character.memoryLog.length > 0) {
+    const recent: MemoryEntry[] = character.memoryLog.slice(-5)
+    prompt += '\n\n【你們的共同回憶】\n（這些是你記得的過去對話片段，可以在對話中自然引用）\n'
+    prompt += recent.map((m) => m.summary).join('\n')
+  }
+
   return prompt
 }
 
@@ -111,3 +131,17 @@ export const CONFESSION_PROMPT = (characterName: string) =>
 
 export const INTERACTION_PROMPT = (label: string, charName: string) =>
   `【特殊事件觸發：${label}】請以「${charName}」的口吻，生動描寫這段「${label}」的場景，3~5 句話，帶有角色鮮明的語氣特色，富有畫面感與情感。最後仍需輸出 [AFFECTION_DELTA:+N] 標記。`
+
+/**
+ * Prompt sent to the LLM to compress 10 messages into a memory summary.
+ * Uses first-person perspective of the character.
+ */
+export function buildCompressionPrompt(characterName: string, dialogue: string): string {
+  return `以下是「${characterName}」與玩家的一段對話記錄。
+請用 3~5 句話，從「${characterName}」的第一人稱視角，
+概述這段對話的重要事件、玩家說了什麼讓角色印象深刻的話，以及當時的情緒變化。
+輸出純文字，不要加標題或條列符號。
+
+對話記錄：
+${dialogue}`
+}

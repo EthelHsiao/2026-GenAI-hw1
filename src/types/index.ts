@@ -3,6 +3,7 @@ export type CharId = 'A' | 'B' | 'C'
 export type ModelId =
   | 'qwen35-397b'
   | 'qwen35-4b'
+  | 'gemini-2.5-flash'
 
 export interface Settings {
   apiKey: string
@@ -10,6 +11,22 @@ export interface Settings {
   temperature: number   // 0.0 ~ 2.0, default 0.9
   maxTokens: number     // default 1024
   topP: number          // 0.0 ~ 1.0, default 1.0
+  geminiApiKey: string  // Google AI Studio key for image input
+  searchApiKey: string  // Optional SerpAPI key for web search
+  autoTts: boolean      // Auto-read aloud assistant responses
+}
+
+export interface MemoryEntry {
+  id: string
+  summary: string       // LLM-compressed summary text
+  timestamp: string     // Time of compression
+  messageCount: number  // Number of messages covered
+}
+
+export interface DiaryEntry {
+  id: string
+  entry: string         // Diary text in character's first person
+  timestamp: string
 }
 
 export interface Message {
@@ -20,6 +37,9 @@ export interface Message {
   isEvent?: boolean     // special interaction event trigger
   eventLabel?: string   // display label e.g. "約會"
   eventEmoji?: string   // display emoji e.g. "🌸"
+  imagePreviewUrl?: string  // Object URL for image preview (user messages with image)
+  toolName?: string         // tool that was invoked ('web_search' | 'write_diary' | 'read_diary')
+  toolQuery?: string        // search query or diary operation description
 }
 
 export interface Character {
@@ -29,8 +49,16 @@ export interface Character {
   color: string         // Tailwind color class for accent
   systemPrompt: string  // template with {affection} placeholder; editable in dev mode
   affection: number     // 0 ~ 100
-  messages: Message[]   // sliding window, max 10 completed messages
+  messages: Message[]   // conversation history (no hard cap; compressed into memoryLog)
   userPersona: string   // player's self-introduction for this character
+  memoryLog: MemoryEntry[]  // up to 20 compressed memory summaries (FIFO)
+  diary: DiaryEntry[]       // up to 30 diary entries (FIFO)
+}
+
+export interface ImageInputData {
+  base64: string        // base64-encoded image, no data: prefix
+  mimeType: string      // 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
+  previewUrl: string    // Object URL for display (revoked after use)
 }
 
 export interface Interaction {
@@ -61,6 +89,14 @@ export interface ConquestData {
   isGenerating: boolean
 }
 
+export interface RoutingContext {
+  hasImage: boolean
+  isSpecialEvent: boolean
+  usesTool: boolean        // true when a tool was called and we're making the final LLM call
+  isMemorySummary: boolean
+  userSelectedModel: ModelId
+}
+
 // Affection stage
 export function getAffectionStage(affection: number): {
   label: string
@@ -75,7 +111,8 @@ export function getAffectionStage(affection: number): {
 
 export const MILESTONE_THRESHOLDS = [30, 60, 85, 100] as const
 
+// Only Qwen models in manual selector; Gemini is routed automatically
 export const AVAILABLE_MODELS: { value: ModelId; label: string }[] = [
   { value: 'qwen35-397b', label: 'Qwen 3.5 397B' },
-  { value: 'qwen35-4b', label: 'Qwen 3.5 4B' },
+  { value: 'qwen35-4b',   label: 'Qwen 3.5 4B' },
 ]

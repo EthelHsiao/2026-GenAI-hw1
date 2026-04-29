@@ -104,6 +104,49 @@ export function SettingsModal() {
 
           <Separator />
 
+          {/* Gemini / tools */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Gemini API Key</Label>
+              <Input
+                type={showKey ? 'text' : 'password'}
+                placeholder="Google AI Studio key..."
+                value={settings.geminiApiKey}
+                onChange={(e) => updateSettings({ geminiApiKey: e.target.value })}
+                className="font-mono text-xs"
+              />
+              <p className="text-xs text-muted-foreground">
+                Used automatically when an image is attached.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Search API Key</Label>
+              <Input
+                type={showKey ? 'text' : 'password'}
+                placeholder="Optional SerpAPI key..."
+                value={settings.searchApiKey}
+                onChange={(e) => updateSettings({ searchApiKey: e.target.value })}
+                className="font-mono text-xs"
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional. Empty value uses DuckDuckGo through the local Vite proxy.
+              </p>
+            </div>
+
+            <label className="flex cursor-pointer items-center justify-between rounded-md border border-border px-3 py-2">
+              <span className="text-sm">Auto TTS</span>
+              <input
+                type="checkbox"
+                checked={settings.autoTts}
+                onChange={(e) => updateSettings({ autoTts: e.target.checked })}
+                className="h-4 w-4 accent-primary"
+              />
+            </label>
+          </div>
+
+          <Separator />
+
           {/* Model */}
           <div className="space-y-2">
             <Label>模型</Label>
